@@ -14,7 +14,7 @@ def run_phase(script_name):
         print(f"=====================================\n")
 
 if __name__ == "__main__":
-    phases = ['phase1.py', 'phase2.py', 'phase3.py', 'phase4.py', 'phase5.py']
+    phases = ['data_visualisation.py', 'discontinuous_splined_lr.py', 'splined_lr.py', 'Hyperparameter_Tuning_Loop.py', 'piecewise_linear_regression.py']
     for phase in phases:
         run_phase(phase)
     print("All phases completed successfully. The model has been tested on the validation dataset.")
