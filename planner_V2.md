@@ -2,9 +2,10 @@
 
 ## 📌 Project Overview
 **Goal:** Upgrade the existing continuous piecewise linear regression model from a synthetic-data proof-of-concept into a production-ready, dataset-agnostic algorithm. 
+
 **Key Objectives:**
 1.  Support N-dimensional feature matrices while isolating non-linear splines to a specific target column.
-2.  Ensure mathematical stability during Ordinary Least Squares matrix operations[span_0](start_span)[span_0](end_span).
+2.  Ensure mathematical stability during Ordinary Least Squares matrix operations.
 3.  Implement a scale-invariant tuning loop that automatically adapts to any dataset's distribution using relative metrics and dynamic knot placement.
 
 ---
@@ -19,7 +20,7 @@ Transition the model to handle multi-dimensional arrays and prevent catastrophic
     *   Add validation to ensure input `X` is always treated as a 2D matrix (shape `N x D`). Reshape 1D arrays automatically using `X.reshape(-1, 1)`.
     *   Construct the base design matrix containing a bias column (1s) and **all** original features from `X`.
     *   Isolate the target column: `spline_col = X[:, self.spline_idx]`.
-    *   Calculate the Truncated Power Basis Functions[span_1](start_span)[span_1](end_span) iteratively for each knot, strictly applied to `spline_col`.
+    *   Calculate the Truncated Power Basis Functions iteratively for each knot, strictly applied to `spline_col`.
     *   Horizontally stack these computed basis terms onto the base design matrix.
 *   [ ] **Step 1.3: Stable Matrix Solver (`fit`)**
     *   Remove `np.linalg.inv` to prevent crashes when knots are too close together or features are highly collinear.
