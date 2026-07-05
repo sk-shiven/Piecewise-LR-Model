@@ -31,21 +31,25 @@ Transition the model to handle multi-dimensional arrays and prevent catastrophic
 
 ---
 
-## 🧠 Phase 2: Building the Dataset-Agnostic Tuning Loop
-Replace hardcoded error thresholds and static linear spacing with a flexible, scale-invariant controller.
+## 🧠 Phase 2: Building the Dataset-Agnostic Tuning Loop (Revised)
+
+Replace hardcoded error thresholds with a scale-invariant controller protected by dynamic structural guardrails.
 
 *   [ ] **Step 2.1: Establish Scale-Invariant Baselines**
-    *   Before the loop begins, calculate `baseline_mse = np.var(y_val)`. This represents the error of a naive model predicting only the mean of the validation set, providing a universal scale for "bad" performance regardless of the dataset's units.
-*   [ ] **Step 2.2: Implement Data-Driven Knot Placement**
-    *   Replace `np.linspace` with `np.quantile`.
-    *   For a given number of bins, calculate uniform quantiles: `quantiles = np.linspace(0, 1, bins + 1)[1:-1]`.
-    *   Map these quantiles to actual knot values using `np.quantile(X_train[:, spline_idx], quantiles)`. This guarantees knots are placed where data is dense, avoiding empty regions caused by outliers.
-*   [ ] **Step 2.3: Relative Improvement Early Stopping**
-    *   Inside the epoch loop, fit the model and evaluate `val_mse`.
-    *   Calculate the percentage improvement: `improvement = (best_val_mse - val_mse) / best_val_mse`.
-    *   If `val_mse < best_val_mse`, update the best model.
-    *   **Stop Condition 1 (Diminishing Returns):** If `improvement` is positive but falls below a strict threshold (e.g., `< 0.005` or 0.5%), break the loop. The added complexity is no longer yielding meaningful gains.
-    *   **Stop Condition 2 (Overfitting):** If `val_mse` increases compared to the previous best iteration, break the loop and revert to the previously saved optimal model.
+    *   Calculate `baseline_mse = np.var(y_val)` to serve as the benchmark for a naive model.
+*   [ ] **Step 2.2: Compute Structural Guardrails**
+    *   Define `min_samples_per_bin = 20`. 
+    *   Calculate the hard upper limit for bins: `absolute_max_bins = len(X_train) // min_samples_per_bin`.
+    *   Define `min_spatial_delta = 0.03` (adjacent knots must be at least 3% of the total feature range apart).
+*   [ ] **Step 2.3: Adaptive Knot Generator with Collinearity Preemption**
+    *   Inside the tuning loop, iterate `bins` from 2 up to `absolute_max_bins`.
+    *   Generate target quantiles: `quantiles = np.linspace(0, 1, bins + 1)[1:-1]`.
+    *   Map quantiles to actual feature values: `knots = np.quantile(X_train[:, spline_idx], quantiles)`.
+    *   **The Guardrail Check:** Calculate the distance between adjacent knots: `deltas = np.diff(knots)`. Compute the total range: `feature_range = X_train[:, spline_idx].max() - X_train[:, spline_idx].min()`.
+    *   **Action:** If `np.any(deltas < (min_spatial_delta * feature_range))`, immediately trigger early stopping *before* fitting the model. Print: `"Tuning terminated: Minimum spatial bin width reached due to feature skewness."`
+*   [ ] **Step 2.4: Relative Improvement Early Stopping**
+    *   Fit the model using `np.linalg.lstsq` on the safe knot configuration.
+    *   Evaluate `val_mse`. If the relative improvement `(best_val_mse - val_mse) / best_val_mse` is less than 0.5%, or if `val_mse` begins to rise, freeze the previous iteration's bin architecture as the final fixed model.
 
 ---
 
