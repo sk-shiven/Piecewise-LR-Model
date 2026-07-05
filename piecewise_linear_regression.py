@@ -47,7 +47,9 @@ class PiecewiseLinearRegression:
             y (np.ndarray): Target values.
         """
         X_trans = self._transform_features(X)
-        self.weights = np.linalg.inv(X_trans.T @ X_trans) @ X_trans.T @ y
+        # Using pseudo-inverse (pinv) to handle potentially singular matrices
+        # (e.g. highly collinear features or more features than samples)
+        self.weights = np.linalg.pinv(X_trans.T @ X_trans) @ X_trans.T @ y
         return self
 
     def predict(self, X):
